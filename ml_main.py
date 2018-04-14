@@ -14,6 +14,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 import pickle
 import collections
+import librosa
+import AudioSetLoad
 
 
 def svm(X_train, X_test, y_train, y_test):
@@ -84,6 +86,15 @@ def randForest(X_train, X_test, y_train, y_test):
     #print("Accuracy is ", accuracy_score(y_test, y_pred_ran)*100)
     return accuracy
 
+def extract_feature(file_name):
+    X, sample_rate = librosa.load(file_name)
+    stft = np.abs(librosa.stft(X))
+    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T,axis=0)
+    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T,axis=0)
+    mel = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T,axis=0)
+    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T,axis=0)
+    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sample_rate).T,axis=0)
+    return mfccs,chroma,mel,contrast,tonnetz
 
 def load_model_and_predict_class(model, test_input):
 
@@ -91,6 +102,11 @@ def load_model_and_predict_class(model, test_input):
     y = loaded_model.predict([test_input])
     return y
 
+def test_audiofile(model, filename):
+    mfccs, chroma, mel, contrast,tonnetz = extract_feature(filename)
+    ext_features = np.hstack([mfccs,chroma,mel,contrast,tonnetz])
+    features = ext_features
+    return load_model_and_predict_class(model, features)
 
 if __name__ == "__main__":
     features = np.load("features.txt")
@@ -125,13 +141,16 @@ if __name__ == "__main__":
     #model_files=['svm.sav','knnuniform.sav', 'knndistance.sav', 'decTree.sav', 'randForest.sav']
     model_files = ['knnuniform.sav', 'knndistance.sav', 'decTree.sav', 'randForest.sav']
 
+    fn, ytid, classes = AudioSetLoad.dl_random_file()
+
     for model in model_files:
-        new_vote=load_model_and_predict_class(model,X_test[8])
+        new_vote=test_audiofile(model,fn)
         votes.append(new_vote)
 
     votes_array=np.array(votes)
     counts= np.bincount(votes_array.flatten()) # in counts steht anzahl wie oft diese zahl vorkommt(=index )
+    
 
     max_class= np.argmax(counts)
     print max_class
-
+    print classes

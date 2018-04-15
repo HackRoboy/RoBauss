@@ -20,7 +20,7 @@ video_codec = 'h264'
 video_container = 'mp4'
 
 # Load the AudioSet training set
-with open('data/unbalanced_train_segments.csv') as f:
+with open('data/balanced_train_segments.csv') as f:
     lines = f.readlines()
 
 dl_list = [[s.replace('\"', '').replace(' ','') for s in line.strip().split(',')] for line in lines[3:]]

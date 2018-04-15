@@ -19,6 +19,7 @@ import AudioSetLoad
 from letRoboySpeak import roboy_talk
 import scipy.io.wavfile as sciwav
 import sounddevice as sd
+import os, sys
 
 
 def svm(X_train, X_test, y_train, y_test):
@@ -147,19 +148,66 @@ if __name__ == "__main__":
 
     #fn, ytid, classes = AudioSetLoad.dl_random_file()
 
+    #print AudioSetLoad.file_labelling
+
+    class_list = ["air_conditioner", "car_horn", "children_playing", "dog_bark", "drilling", "engine_idling",
+                  "gun_shot", "jackhammer", "siren", "street_music"]
     fn = "recorded.wav"
     classes = "recorded stuff"
-    for model in model_files:
-        new_vote=test_audiofile(model,fn)
-        votes.append(new_vote)
+    file_list = os.listdir("./data/")
 
-    votes_array=np.array(votes)
-    counts= np.bincount(votes_array.flatten()) # in counts steht anzahl wie oft diese zahl vorkommt(=index )
-    
+    if sys.argv[1] == "google":
+        for file in file_list:
+            if ".wav" in file:
+                votes = []
+                for model in model_files:
+                    new_vote = test_audiofile(model, "./data/" + file)
+                    votes.append(new_vote)
+                votes_array = np.array(votes)
+                counts = np.bincount(votes_array.flatten())  # in counts steht anzahl wie oft diese zahl vorkommt(=index )
+                max_class = np.argmax(counts)
+                print max_class, " -> ", class_list[max_class]
+                try:
+                    classes = AudioSetLoad.file_labelling[file.split('.')[0]]
+                    print classes, "(", file, ")"
+                except KeyError as e:
+                    print "no class for ", file.split(".")
 
-    max_class= np.argmax(counts)
-    print max_class
-    print classes, "(", fn, ")"
-    roboy_talk(max_class)
-    rate, data = sciwav.read(fn)
-    sd.play(data, rate, blocking=True)
+    elif sys.argv[1] == "recorded":
+        for model in model_files:
+            new_vote=test_audiofile(model,fn)
+            votes.append(new_vote)
+
+        votes_array=np.array(votes)
+        counts= np.bincount(votes_array.flatten()) # in counts steht anzahl wie oft diese zahl vorkommt(=index )
+
+
+        max_class= np.argmax(counts)
+        print max_class, " -> ", class_list[max_class]
+        print classes, "(", fn, ")"
+        rate, data = sciwav.read(fn)
+        sd.play(data, rate, blocking=True)
+        #roboy_talk(max_class)
+
+
+    elif sys.argv[1] == "demo":
+
+        demo_list = ["./data/1cS0oGvV5PY.wav", "recorded_child.wav",  "./data/YJG1Zz097M4.wav", "./data/-x2aAKUtNRw.wav", "recorded.wav"]
+
+        for fn in demo_list:
+            votes = []
+            for model in model_files:
+                new_vote=test_audiofile(model,fn)
+                votes.append(new_vote)
+
+            votes_array=np.array(votes)
+            counts= np.bincount(votes_array.flatten()) # in counts steht anzahl wie oft diese zahl vorkommt(=index )
+
+
+            max_class= np.argmax(counts)
+            print max_class, " -> ", class_list[max_class]
+            print classes, "(", fn, ")"
+            rate, data = sciwav.read(fn)
+            sd.play(data, rate, blocking=True)
+            roboy_talk(max_class)
+

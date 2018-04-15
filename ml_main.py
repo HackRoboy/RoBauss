@@ -16,6 +16,9 @@ import pickle
 import collections
 import librosa
 import AudioSetLoad
+from letRoboySpeak import roboy_talk
+import scipy.io.wavfile as sciwav
+import sounddevice as sd
 
 
 def svm(X_train, X_test, y_train, y_test):
@@ -109,40 +112,43 @@ def test_audiofile(model, filename):
     return load_model_and_predict_class(model, features)
 
 if __name__ == "__main__":
-    features = np.load("features.txt")
-    labels = np.load("label.txt")
-    print(features.shape)
-    print(labels.shape)
+    trained = True
+    if trained == False:
+        features = np.load("feature_all.npy")
+        labels = np.load("hot_labels_all.npy")
+        print(features.shape)
+        print(labels.shape)
 
+        labels_not_hot = np.load("labels_all.npy")
+        """for element in labels:
+            for i in range(0, len(element)):
+                if element[i] == 1:
+                    labels_not_hot.append(i)"""
 
-    labels_not_hot = []
-    for element in labels:
-        for i in range(0, len(element)):
-            if element[i] == 1:
-                labels_not_hot.append(i)
+        labels_array = labels_not_hot
+        print(labels_array)
+        print(labels_array.shape)
 
-    labels_array = np.array(labels_not_hot)
-    print(labels_array)
-    print(labels_array.shape)
+        X = features
+        y = labels_array
+        X_train, X_test, y_train, y_test = train_test_split( X, y, test_size = 0.3, random_state = 100)
 
-    X = features
-    y = labels_array
-    X_train, X_test, y_train, y_test = train_test_split( X, y, test_size = 0.3, random_state = 100)
-
-    #acc_svm=svm(X_train, X_test, y_train, y_test)
-    #print (acc_svm)
-    acc_knn=knn(X_train, X_test, y_train, y_test)
-    print (acc_knn)
-    acc_decTree=decTree(X_train, X_test, y_train, y_test)
-    print (acc_decTree)
-    acc_randForest=randForest(X_train, X_test, y_train, y_test)
+        #acc_svm=svm(X_train, X_test, y_train, y_test)
+        #print (acc_svm)
+        acc_knn=knn(X_train, X_test, y_train, y_test)
+        print (acc_knn)
+        acc_decTree=decTree(X_train, X_test, y_train, y_test)
+        print (acc_decTree)
+        acc_randForest=randForest(X_train, X_test, y_train, y_test)
 
     votes=[]
     #model_files=['svm.sav','knnuniform.sav', 'knndistance.sav', 'decTree.sav', 'randForest.sav']
     model_files = ['knnuniform.sav', 'knndistance.sav', 'decTree.sav', 'randForest.sav']
 
-    fn, ytid, classes = AudioSetLoad.dl_random_file()
+    #fn, ytid, classes = AudioSetLoad.dl_random_file()
 
+    fn = "recorded.wav"
+    classes = "recorded stuff"
     for model in model_files:
         new_vote=test_audiofile(model,fn)
         votes.append(new_vote)
@@ -153,4 +159,7 @@ if __name__ == "__main__":
 
     max_class= np.argmax(counts)
     print max_class
-    print classes
+    print classes, "(", fn, ")"
+    roboy_talk(max_class)
+    rate, data = sciwav.read(fn)
+    sd.play(data, rate, blocking=True)

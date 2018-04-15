@@ -17,8 +17,8 @@ from roboy_communication_cognition import srv
 """
 
 text = ["a air conditioner.", "a car horn.", "playing children.",
-        "a dog. Who is a good boy.", "something drilling.", "a engine.",
-        "a gun shot.", "a jackhammer.", "a siren.", "music."]
+        "a dog. Who is a good boy.", "something drilling.", "an engine.",
+        "a gun shot. Oh oh.", "a jackhammer.", "a siren.", "music. I love music."]
 
 def roboy_talk(class_label):
 

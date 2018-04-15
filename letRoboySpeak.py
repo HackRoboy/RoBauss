@@ -21,13 +21,15 @@ text = ["a air conditioner.", "a car horn.", "playing children.",
         "a gun shot.", "a jackhammer.", "a siren.", "music."]
 
 def roboy_talk(class_label):
-    if class_label > 9:
-        print "not available class"
-        raise ValueError("Class out of limits (0 to 9)")
+
     rospy.wait_for_service('/roboy/cognition/speech/synthesis/talk')
     try:
         talk = rospy.ServiceProxy('/roboy/cognition/speech/synthesis/talk', srv.Talk)
-        resp = talk("I heard " + text[class_label])
+        if class_label > 9:
+            speach = "I never heard this before."
+        else:
+            speach = "I heard " + text[class_label]
+        resp = talk(speach)
         return resp
     except rospy.ServiceException, e:
         print "Service call failed: %s"%e
